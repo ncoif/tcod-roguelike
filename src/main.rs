@@ -115,12 +115,12 @@ fn main() {
 
     let mut con = Offscreen::new(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    // create the objects
-    let player = Object::new(25, 23, '@', colors::WHITE);
-    let mut objects = [player];
-
     // generate the map
-    let map = dungeon_generator::make_map();
+    let (map, (player_x, player_y)) = dungeon_generator::make_map();
+
+    // create the objects
+    let player = Object::new(player_x, player_y, '@', colors::WHITE);
+    let mut objects = [player];
 
     // main game loop
     while !root.window_closed() {
