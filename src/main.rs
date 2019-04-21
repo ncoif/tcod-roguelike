@@ -7,10 +7,10 @@ use tcod::colors::{self, Color};
 use tcod::console::*;
 use tcod::map::{FovAlgorithm, Map as FovMap};
 
-const SCREEN_WIDTH: i32 = 80;
-const SCREEN_HEIGHT: i32 = 50;
+const SCREEN_WIDTH: i32 = 120;
+const SCREEN_HEIGHT: i32 = 80;
 
-const LIMIT_FPS: i32 = 20;
+const LIMIT_FPS: i32 = 30;
 
 const FOV_ALGO: FovAlgorithm = FovAlgorithm::Basic;
 const FOV_LIGHT_WALLS: bool = true;

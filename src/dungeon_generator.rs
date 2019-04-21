@@ -3,12 +3,12 @@ extern crate rand;
 use rand::Rng;
 use std::cmp;
 
-pub const MAP_WIDTH: i32 = 80;
-pub const MAP_HEIGHT: i32 = 50;
+pub const MAP_WIDTH: i32 = 120;
+pub const MAP_HEIGHT: i32 = 80;
 
 const ROOM_MAX_SIZE: i32 = 10;
 const ROOM_MIN_SIZE: i32 = 6;
-const MAX_ROOMS: i32 = 30;
+const MAX_ROOMS: i32 = 50;
 
 pub type Map = Vec<Vec<Tile>>;
 
