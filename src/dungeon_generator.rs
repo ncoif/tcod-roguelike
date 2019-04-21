@@ -16,6 +16,10 @@ pub fn is_blocked(map: &Map, x: i32, y: i32) -> bool {
     map[x as usize][y as usize].blocked
 }
 
+pub fn is_blocking_sight(map: &Map, x: i32, y: i32) -> bool {
+    map[x as usize][y as usize].block_sight
+}
+
 /// a tile of the map, and it's properties
 #[derive(Clone, Copy, Debug)]
 pub struct Tile {
