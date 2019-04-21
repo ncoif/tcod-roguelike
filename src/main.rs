@@ -1,22 +1,49 @@
 extern crate tcod;
 
-use tcod::colors;
+use tcod::colors::{self, Color};
 use tcod::console::*;
 
 const SCREEN_WIDTH: i32 = 80;
 const SCREEN_HEIGHT: i32 = 50;
 const LIMIT_FPS: i32 = 20;
 
-fn handle_keys(root: &mut Root, player_x: &mut i32, player_y: &mut i32) -> bool {
+/// Generic object that represents an ASCII character on the screen
+/// eg: the player, a monster, an item, etc...
+struct Object {
+    x: i32,
+    y: i32,
+    char: char,
+    color: Color,
+}
+
+impl Object {
+    pub fn new(x: i32, y: i32, char: char, color: Color) -> Self {
+        Object { x, y, char, color }
+    }
+
+    pub fn move_by(&mut self, dx: i32, dy: i32) {
+        self.x += dx;
+        self.y += dy;
+    }
+
+    /// draw the ASCII character that represents this objects at its position with its color
+    pub fn draw(&self, con: &mut Console) {
+        con.set_default_foreground(self.color);
+        con.put_char(self.x, self.y, self.char, BackgroundFlag::None);
+    }
+
+    /// Erase the ASCII character that represents this object
+    pub fn clear(&self, con: &mut Console) {
+        con.put_char(self.x, self.y, ' ', BackgroundFlag::None);
+    }
+}
+
+fn handle_keys(root: &mut Root, player: &mut Object) -> bool {
     use tcod::input::Key;
     use tcod::input::KeyCode::*;
 
     let key = root.wait_for_keypress(true);
     match key {
-        Key { code: Up, .. } => *player_y -= 1,
-        Key { code: Down, .. } => *player_y += 1,
-        Key { code: Left, .. } => *player_x -= 1,
-        Key { code: Right, .. } => *player_x += 1,
         Key {
             code: Enter,
             alt: true,
@@ -26,7 +53,16 @@ fn handle_keys(root: &mut Root, player_x: &mut i32, player_y: &mut i32) -> bool 
             let fullscreen = root.is_fullscreen();
             root.set_fullscreen(!fullscreen);
         }
-        Key { code: Escape, .. } => return true, //exit game
+        Key { code: Escape, .. } => {
+            // Escape: exit game
+            return true;
+        }
+
+        Key { code: Up, .. } => player.move_by(0, -1),
+        Key { code: Down, .. } => player.move_by(0, 1),
+        Key { code: Left, .. } => player.move_by(-1, 0),
+        Key { code: Right, .. } => player.move_by(1, 0),
+
         _ => {}
     }
     false
@@ -43,21 +79,20 @@ fn main() {
 
     let mut con = Offscreen::new(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    // player start in the center
-    let mut player_x = SCREEN_WIDTH / 2;
-    let mut player_y = SCREEN_HEIGHT / 2;
+    let player = Object::new(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', colors::WHITE);
+    let npc = Object::new(SCREEN_WIDTH / 2 - 5, SCREEN_HEIGHT / 2, '@', colors::YELLOW);
+    let mut objects = [player, npc];
 
     // main game loop
     while !root.window_closed() {
-        con.set_default_foreground(colors::WHITE);
-        con.put_char(player_x, player_y, '@', BackgroundFlag::None);
+        // draw all objects
+        for object in &objects {
+            object.draw(&mut con);
+        }
 
-        root.flush();
-
-        con.put_char(player_x, player_y, ' ', BackgroundFlag::None);
-
+        // blit the content of the console to the root console and present it
         blit(
-            &mut con,
+            &con,
             (0, 0),
             (SCREEN_WIDTH, SCREEN_HEIGHT),
             &mut root,
@@ -65,9 +100,16 @@ fn main() {
             1.0,
             1.0,
         );
+        root.flush();
+
+        // erase all objects at their old locations, before the move
+        for object in &objects {
+            object.clear(&mut con);
+        }
 
         // handle keys and exit game if needed
-        let exit = handle_keys(&mut root, &mut player_x, &mut player_y);
+        let player = &mut objects[0];
+        let exit = handle_keys(&mut root, player);
         if exit {
             break;
         }
