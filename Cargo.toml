@@ -5,3 +5,4 @@ authors = ["ncoif <nicolas@ncoif.net>"]
 edition = "2018"
 
 [dependencies]
+tcod = "0.13"
