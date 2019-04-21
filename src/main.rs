@@ -49,7 +49,7 @@ impl Object {
     }
 
     pub fn move_by(&mut self, dx: i32, dy: i32, map: &Map) {
-        if !is_blocked(&map, self.x + dx, self.y + dy) {
+        if !get_tile(&map, self.x + dx, self.y + dy).blocked {
             self.x += dx;
             self.y += dy;
         }
@@ -71,7 +71,7 @@ fn render_all(
     root: &mut Root,
     con: &mut Offscreen,
     objects: &[Object],
-    map: &Map,
+    map: &mut Map,
     fov_map: &mut FovMap,
     fov_recompute: bool,
 ) {
@@ -79,27 +79,37 @@ fn render_all(
         // recompute fov if needed
         let player = &objects[0];
         fov_map.compute_fov(player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO);
+
+        // draw all the tiles of the map
+        for y in 0..MAP_HEIGHT {
+            for x in 0..MAP_WIDTH {
+                let visible = fov_map.is_in_fov(x, y);
+                let wall = map[x as usize][y as usize].blocked;
+                let color = match (visible, wall) {
+                    (false, true) => COLOR_DARK_WALL,
+                    (false, false) => COLOR_DARK_GROUND,
+                    (true, true) => COLOR_LIGHT_WALL,
+                    (true, false) => COLOR_LIGHT_GROUND,
+                };
+
+                let explored = &mut map[x as usize][y as usize].explored;
+
+                if visible {
+                    *explored = true; // since it's visible, explore it
+                }
+
+                if *explored {
+                    // show only explored tiles, i.e. already seen
+                    con.set_char_background(x, y, color, BackgroundFlag::Set);
+                }
+            }
+        }
     }
 
     // draw all objects
     for object in objects {
         if fov_map.is_in_fov(object.x, object.y) {
             object.draw(con);
-        }
-    }
-
-    // draw all the tiles of the map
-    for y in 0..MAP_HEIGHT {
-        for x in 0..MAP_WIDTH {
-            let wall = is_blocked(&map, x, y);
-            let visible = fov_map.is_in_fov(x, y);
-            let color = match (visible, wall) {
-                (false, true) => COLOR_DARK_WALL,
-                (false, false) => COLOR_DARK_GROUND,
-                (true, true) => COLOR_LIGHT_WALL,
-                (true, false) => COLOR_LIGHT_GROUND,
-            };
-            con.set_char_background(x, y, color, BackgroundFlag::Set);
         }
     }
 
@@ -149,12 +159,12 @@ fn main() {
     let mut con = Offscreen::new(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // generate the map
-    let (map, (player_x, player_y)) = dungeon_generator::make_map();
+    let (mut map, (player_x, player_y)) = dungeon_generator::make_map();
     let mut fov_map = FovMap::new(MAP_WIDTH, MAP_HEIGHT);
     for y in 0..MAP_HEIGHT {
         for x in 0..MAP_WIDTH {
-            let transparent = !is_blocking_sight(&map, x, y);
-            let walkable = !is_blocked(&map, x, y);
+            let transparent = !get_tile(&map, x, y).block_sight;
+            let walkable = !get_tile(&map, x, y).blocked;
             fov_map.set(x, y, transparent, walkable);
         }
     }
@@ -172,7 +182,7 @@ fn main() {
             &mut root,
             &mut con,
             &objects,
-            &map,
+            &mut map,
             &mut fov_map,
             fov_recompute,
         );

@@ -12,19 +12,16 @@ const MAX_ROOMS: i32 = 30;
 
 pub type Map = Vec<Vec<Tile>>;
 
-pub fn is_blocked(map: &Map, x: i32, y: i32) -> bool {
-    map[x as usize][y as usize].blocked
-}
-
-pub fn is_blocking_sight(map: &Map, x: i32, y: i32) -> bool {
-    map[x as usize][y as usize].block_sight
+pub fn get_tile(map: &Map, x: i32, y: i32) -> Tile {
+    map[x as usize][y as usize]
 }
 
 /// a tile of the map, and it's properties
 #[derive(Clone, Copy, Debug)]
 pub struct Tile {
-    blocked: bool,
-    block_sight: bool,
+    pub blocked: bool,
+    pub block_sight: bool,
+    pub explored: bool,
 }
 
 impl Tile {
@@ -32,6 +29,7 @@ impl Tile {
         Tile {
             blocked: false,
             block_sight: false,
+            explored: false,
         }
     }
 
@@ -39,6 +37,7 @@ impl Tile {
         Tile {
             blocked: true,
             block_sight: true,
+            explored: false,
         }
     }
 }
