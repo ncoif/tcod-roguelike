@@ -7,36 +7,6 @@ const SCREEN_WIDTH: i32 = 80;
 const SCREEN_HEIGHT: i32 = 50;
 const LIMIT_FPS: i32 = 20;
 
-fn main() {
-    let mut root = Root::initializer()
-        .font("arial10x10.png", FontLayout::Tcod)
-        .font_type(FontType::Greyscale)
-        .size(SCREEN_WIDTH, SCREEN_HEIGHT)
-        .title("tcod-roguelike")
-        .init();
-    tcod::system::set_fps(LIMIT_FPS);
-
-    // player start in the center
-    let mut player_x = SCREEN_WIDTH / 2;
-    let mut player_y = SCREEN_HEIGHT / 2;
-
-    // main game loop
-    while !root.window_closed() {
-        root.set_default_foreground(colors::WHITE);
-        root.put_char(player_x, player_y, '@', BackgroundFlag::None);
-
-        root.flush();
-
-        root.put_char(player_x, player_y, ' ', BackgroundFlag::None);
-
-        // handle keys and exit game if needed
-        let exit = handle_keys(&mut root, &mut player_x, &mut player_y);
-        if exit {
-            break;
-        }
-    }
-}
-
 fn handle_keys(root: &mut Root, player_x: &mut i32, player_y: &mut i32) -> bool {
     use tcod::input::Key;
     use tcod::input::KeyCode::*;
@@ -60,4 +30,46 @@ fn handle_keys(root: &mut Root, player_x: &mut i32, player_y: &mut i32) -> bool 
         _ => {}
     }
     false
+}
+
+fn main() {
+    let mut root = Root::initializer()
+        .font("arial10x10.png", FontLayout::Tcod)
+        .font_type(FontType::Greyscale)
+        .size(SCREEN_WIDTH, SCREEN_HEIGHT)
+        .title("tcod-roguelike")
+        .init();
+    tcod::system::set_fps(LIMIT_FPS);
+
+    let mut con = Offscreen::new(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // player start in the center
+    let mut player_x = SCREEN_WIDTH / 2;
+    let mut player_y = SCREEN_HEIGHT / 2;
+
+    // main game loop
+    while !root.window_closed() {
+        con.set_default_foreground(colors::WHITE);
+        con.put_char(player_x, player_y, '@', BackgroundFlag::None);
+
+        root.flush();
+
+        con.put_char(player_x, player_y, ' ', BackgroundFlag::None);
+
+        blit(
+            &mut con,
+            (0, 0),
+            (SCREEN_WIDTH, SCREEN_HEIGHT),
+            &mut root,
+            (0, 0),
+            1.0,
+            1.0,
+        );
+
+        // handle keys and exit game if needed
+        let exit = handle_keys(&mut root, &mut player_x, &mut player_y);
+        if exit {
+            break;
+        }
+    }
 }
